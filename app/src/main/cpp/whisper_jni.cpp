@@ -1,7 +1,7 @@
 #include <jni.h>
 #include <string>
 #include <android/log.h>
-#include "whisper/include/whisper.h"
+#include "whisper.h"
 
 #define TAG "WhisperJNI"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
