@@ -10,8 +10,8 @@
 | Severity | Count |
 |----------|-------|
 | HIGH     | 2     |
-| MEDIUM   | 5     |
-| LOW      | 4     |
+| MEDIUM   | 6     |
+| LOW      | 5     |
 
 ---
 
@@ -208,6 +208,28 @@ The app declares `INTERNET` permission for model downloads, but there is no runt
 
 ---
 
+### 12. Dockerfile Builds Debug APK
+
+**File:** `Dockerfile:36`
+**Category:** Improper Build Configuration (CWE-489)
+
+The Dockerfile runs `./gradlew assembleDebug`, producing a debug APK with debugging symbols and reduced optimizations. If this Docker image is used for distribution, the APK will lack release hardening (ProGuard/R8 obfuscation, resource shrinking).
+
+**Recommendation:** Change to `./gradlew assembleRelease` for production Docker builds.
+
+---
+
+### 13. Missing Gradle Dependency Lock File
+
+**File:** Project root (missing `gradle.lock`)
+**Category:** Non-deterministic Build (CWE-1104)
+
+No Gradle dependency lock file exists. Transitive dependency versions are resolved dynamically, meaning different builds could pull different versions — potentially including newly published vulnerable versions.
+
+**Recommendation:** Generate and commit a lock file with `./gradlew dependencies --write-locks`.
+
+---
+
 ## Positive Security Findings
 
 The following security best practices are already in place:
@@ -234,3 +256,5 @@ The following security best practices are already in place:
 5. **Short-term:** Add network security configuration with certificate pinning
 6. **Medium-term:** Add audio buffer size limits
 7. **Medium-term:** Add synchronization for JNI pointer lifecycle
+8. **Medium-term:** Use release build in Dockerfile
+9. **Medium-term:** Add Gradle dependency lock file
