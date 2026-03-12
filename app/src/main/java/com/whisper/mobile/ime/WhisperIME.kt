@@ -19,6 +19,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 class WhisperIME : InputMethodService(), LifecycleOwner, SavedStateRegistryOwner {
 
@@ -30,7 +32,9 @@ class WhisperIME : InputMethodService(), LifecycleOwner, SavedStateRegistryOwner
         get() = savedStateRegistryController.savedStateRegistry
 
     private var scope: CoroutineScope? = null
+    @Volatile
     private var whisperContext: Long = 0L
+    private val contextLock = ReentrantLock()
     private lateinit var modelManager: ModelManager
     private lateinit var audioRecorder: AudioRecorder
 
@@ -47,11 +51,13 @@ class WhisperIME : InputMethodService(), LifecycleOwner, SavedStateRegistryOwner
     private fun loadModel() {
         val activeModel = modelManager.getActiveModel() ?: return
         val path = modelManager.getModelPath(activeModel) ?: return
-        if (whisperContext != 0L) {
-            WhisperLib.freeContext(whisperContext)
-        }
         scope?.launch(Dispatchers.IO) {
-            whisperContext = WhisperLib.initContext(path)
+            contextLock.withLock {
+                if (whisperContext != 0L) {
+                    WhisperLib.freeContext(whisperContext)
+                }
+                whisperContext = WhisperLib.initContext(path)
+            }
         }
     }
 
@@ -79,9 +85,12 @@ class WhisperIME : InputMethodService(), LifecycleOwner, SavedStateRegistryOwner
     }
 
     private fun transcribe(audioData: FloatArray): String {
-        if (whisperContext == 0L) return ""
-        val lang = modelManager.getLanguagePreference()
-        return WhisperLib.transcribe(whisperContext, audioData, lang)
+        return contextLock.withLock {
+            val ctx = whisperContext
+            if (ctx == 0L) return@withLock ""
+            val lang = modelManager.getLanguagePreference()
+            WhisperLib.transcribe(ctx, audioData, lang)
+        }
     }
 
     fun commitTranscription(text: String) {
@@ -91,11 +100,13 @@ class WhisperIME : InputMethodService(), LifecycleOwner, SavedStateRegistryOwner
     override fun onDestroy() {
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
         audioRecorder.release()
-        if (whisperContext != 0L) {
-            WhisperLib.freeContext(whisperContext)
-            whisperContext = 0L
-        }
         scope?.cancel()
+        contextLock.withLock {
+            if (whisperContext != 0L) {
+                WhisperLib.freeContext(whisperContext)
+                whisperContext = 0L
+            }
+        }
         super.onDestroy()
     }
 }

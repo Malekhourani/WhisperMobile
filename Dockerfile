@@ -32,7 +32,7 @@ COPY . .
 # Ensure gradlew is executable
 RUN chmod +x gradlew
 
-# Build the debug APK
-RUN ./gradlew assembleDebug --no-daemon --stacktrace
+# Build the release APK
+RUN ./gradlew assembleRelease --no-daemon --stacktrace
 
-# The APK will be at app/build/outputs/apk/debug/app-debug.apk
+# The APK will be at app/build/outputs/apk/release/app-release-unsigned.apk

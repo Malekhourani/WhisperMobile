@@ -4,7 +4,12 @@
 #include "whisper.h"
 
 #define TAG "WhisperJNI"
+
+#ifndef NDEBUG
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
+#else
+#define LOGI(...) ((void)0)
+#endif
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, TAG, __VA_ARGS__)
 
 extern "C" {
@@ -15,7 +20,7 @@ Java_com_whisper_mobile_WhisperLib_initContext(
         jstring model_path) {
 
     const char *path = env->GetStringUTFChars(model_path, nullptr);
-    LOGI("Loading model from: %s", path);
+    LOGI("Loading model");
 
     struct whisper_context_params cparams = whisper_context_default_params();
     cparams.use_gpu = false;
@@ -63,8 +68,7 @@ Java_com_whisper_mobile_WhisperLib_transcribe(
         params.detect_language = true;
     }
 
-    LOGI("Transcribing %d samples, language: %s", num_samples,
-         strlen(lang) > 0 ? lang : "auto");
+    LOGI("Transcribing %d samples", num_samples);
 
     int result = whisper_full(ctx, params, samples, num_samples);
 
@@ -83,7 +87,7 @@ Java_com_whisper_mobile_WhisperLib_transcribe(
         text += segment_text;
     }
 
-    LOGI("Transcription result: %s", text.c_str());
+    LOGI("Transcription complete, length: %zu", text.size());
     return env->NewStringUTF(text.c_str());
 }
 

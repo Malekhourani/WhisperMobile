@@ -19,6 +19,8 @@ class AudioRecorder(private val context: Context) {
         const val SAMPLE_RATE = 16000
         private const val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
         private const val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
+        /** Maximum recording duration: 5 minutes of 16kHz mono audio. */
+        private const val MAX_SAMPLES = SAMPLE_RATE * 60 * 5
     }
 
     private val _isRecording = MutableStateFlow(false)
@@ -71,7 +73,13 @@ class AudioRecorder(private val context: Context) {
                 val read = audioRecord?.read(buffer, 0, buffer.size) ?: -1
                 if (read > 0) {
                     synchronized(audioBuffer) {
-                        for (i in 0 until read) {
+                        val remaining = MAX_SAMPLES - audioBuffer.size
+                        if (remaining <= 0) {
+                            _isRecording.value = false
+                            return@Thread
+                        }
+                        val toAdd = minOf(read, remaining)
+                        for (i in 0 until toAdd) {
                             audioBuffer.add(buffer[i])
                         }
                     }

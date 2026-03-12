@@ -9,17 +9,20 @@ import java.io.File
 import java.io.FileOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
+import java.security.MessageDigest
 
-enum class ModelType(val fileName: String, val displaySize: String, val url: String) {
+enum class ModelType(val fileName: String, val displaySize: String, val url: String, val sha256: String) {
     TINY(
         fileName = "ggml-tiny.bin",
         displaySize = "~75 MB",
-        url = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.bin"
+        url = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.bin",
+        sha256 = "be07e048e1e599ad46341c8d2a135645097a538221678b7acdd1b1919c6e1b21"
     ),
     SMALL(
         fileName = "ggml-small.bin",
         displaySize = "~466 MB",
-        url = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin"
+        url = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin",
+        sha256 = "1be3a9b2063867b937e64e2ec7483364a79571f104c43e168c1b5eb882f21b6d"
     )
 }
 
@@ -31,6 +34,15 @@ sealed class DownloadState {
 }
 
 class ModelManager(private val context: Context) {
+
+    companion object {
+        private val TRUSTED_HOSTS = setOf(
+            "huggingface.co",
+            "cdn-lfs.huggingface.co",
+            "cdn-lfs-us-1.huggingface.co",
+            "cdn-lfs-eu-1.huggingface.co",
+        )
+    }
 
     private val modelsDir: File
         get() = File(context.filesDir, "models").also { it.mkdirs() }
@@ -59,10 +71,10 @@ class ModelManager(private val context: Context) {
             val connection = url.openConnection() as HttpURLConnection
             connection.connectTimeout = 15_000
             connection.readTimeout = 30_000
-            connection.instanceFollowRedirects = true
+            connection.instanceFollowRedirects = false
             connection.connect()
 
-            // Handle redirects (HuggingFace often redirects)
+            // Handle redirects with domain validation
             val responseCode = connection.responseCode
             val actualConnection = if (responseCode == HttpURLConnection.HTTP_MOVED_TEMP ||
                 responseCode == HttpURLConnection.HTTP_MOVED_PERM ||
@@ -70,6 +82,10 @@ class ModelManager(private val context: Context) {
             ) {
                 val redirectUrl = connection.getHeaderField("Location")
                 connection.disconnect()
+                val redirectHost = URL(redirectUrl).host
+                if (redirectHost !in TRUSTED_HOSTS) {
+                    throw SecurityException("Untrusted redirect host: $redirectHost")
+                }
                 val newConnection = URL(redirectUrl).openConnection() as HttpURLConnection
                 newConnection.connectTimeout = 15_000
                 newConnection.readTimeout = 30_000
@@ -81,6 +97,7 @@ class ModelManager(private val context: Context) {
 
             val totalBytes = actualConnection.contentLengthLong
             var downloadedBytes = 0L
+            val digest = MessageDigest.getInstance("SHA-256")
 
             actualConnection.inputStream.use { input ->
                 FileOutputStream(tempFile).use { output ->
@@ -88,6 +105,7 @@ class ModelManager(private val context: Context) {
                     var bytesRead: Int
                     while (input.read(buffer).also { bytesRead = it } != -1) {
                         output.write(buffer, 0, bytesRead)
+                        digest.update(buffer, 0, bytesRead)
                         downloadedBytes += bytesRead
                         if (totalBytes > 0) {
                             emit(DownloadState.Downloading(downloadedBytes.toFloat() / totalBytes))
@@ -97,11 +115,20 @@ class ModelManager(private val context: Context) {
             }
 
             actualConnection.disconnect()
+
+            // Verify file integrity
+            val actualHash = digest.digest().joinToString("") { "%02x".format(it) }
+            if (actualHash != type.sha256) {
+                tempFile.delete()
+                emit(DownloadState.Error("Integrity check failed: file hash does not match expected value"))
+                return@flow
+            }
+
             tempFile.renameTo(targetFile)
             emit(DownloadState.Complete)
         } catch (e: Exception) {
             tempFile.delete()
-            emit(DownloadState.Error(e.message ?: "Unknown error"))
+            emit(DownloadState.Error(e.message ?: "Download failed"))
         }
     }.flowOn(Dispatchers.IO)
 
