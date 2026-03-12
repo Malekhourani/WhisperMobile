@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ويسبر موبايل</string>
+    <string name="ime_name">ويسبر موبايل صوت</string>
+
+    <string name="welcome_title">ويسبر موبايل</string>
+    <string name="welcome_subtitle">تحويل الصوت إلى نص بدون إنترنت بتقنية Whisper AI</string>
+
+    <string name="model_tiny">صغير (~٧٥ ميجابايت)</string>
+    <string name="model_tiny_desc">سريع، دقة أقل للعربية</string>
+    <string name="model_small">متوسط (~٤٦٦ ميجابايت)</string>
+    <string name="model_small_desc">أبطأ، دقة أفضل للعربية</string>
+
+    <string name="select_model">اختر النموذج</string>
+    <string name="downloading">جارٍ التحميل…</string>
+    <string name="download_complete">اكتمل التحميل</string>
+    <string name="download_failed">فشل التحميل. اضغط للمحاولة مرة أخرى.</string>
+    <string name="ready">اضغط على المايك للتحدث</string>
+    <string name="recording">جارٍ الاستماع…</string>
+    <string name="transcribing">جارٍ التحويل…</string>
+    <string name="no_model">لم يتم تحميل نموذج</string>
+
+    <string name="enable_ime">تفعيل لوحة المفاتيح</string>
+    <string name="enable_ime_desc">فعّل ويسبر موبايل في إعدادات لوحة المفاتيح</string>
+    <string name="select_ime">تعيين كافتراضي</string>
+    <string name="select_ime_desc">التبديل إلى لوحة مفاتيح ويسبر موبايل</string>
+
+    <string name="settings">الإعدادات</string>
+    <string name="language">اللغة</string>
+    <string name="lang_auto">اكتشاف تلقائي</string>
+    <string name="lang_ar">العربية</string>
+    <string name="lang_en">الإنجليزية</string>
+    <string name="model_management">النموذج</string>
+    <string name="delete_model">حذف النموذج</string>
+    <string name="about">حول</string>
+    <string name="version">الإصدار %1$s</string>
+</resources>

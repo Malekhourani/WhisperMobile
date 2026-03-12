@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">WhisperMobile</string>
+    <string name="ime_name">WhisperMobile Voice</string>
+    <string name="subtype_en">English</string>
+    <string name="subtype_ar">العربية</string>
+
+    <string name="welcome_title">WhisperMobile</string>
+    <string name="welcome_subtitle">Offline voice-to-text powered by Whisper AI</string>
+
+    <string name="model_tiny">Tiny (~75 MB)</string>
+    <string name="model_tiny_desc">Fast, lower accuracy for Arabic</string>
+    <string name="model_small">Small (~466 MB)</string>
+    <string name="model_small_desc">Slower, better accuracy for Arabic</string>
+
+    <string name="select_model">Select Model</string>
+    <string name="downloading">Downloading…</string>
+    <string name="download_complete">Download complete</string>
+    <string name="download_failed">Download failed. Tap to retry.</string>
+    <string name="ready">Tap mic to speak</string>
+    <string name="recording">Listening…</string>
+    <string name="transcribing">Transcribing…</string>
+    <string name="no_model">No model downloaded</string>
+
+    <string name="enable_ime">Enable Keyboard</string>
+    <string name="enable_ime_desc">Enable WhisperMobile in system keyboard settings</string>
+    <string name="select_ime">Set as Default</string>
+    <string name="select_ime_desc">Switch to WhisperMobile keyboard</string>
+
+    <string name="settings">Settings</string>
+    <string name="language">Language</string>
+    <string name="lang_auto">Auto-detect</string>
+    <string name="lang_ar">Arabic</string>
+    <string name="lang_en">English</string>
+    <string name="model_management">Model</string>
+    <string name="delete_model">Delete Model</string>
+    <string name="about">About</string>
+    <string name="version">Version %1$s</string>
+</resources>
